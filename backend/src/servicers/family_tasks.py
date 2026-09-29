@@ -111,8 +111,20 @@ class HouseholdServicer(Household.Servicer):
             tasks=tasks,
         )
 
+    async def is_member(
+        self, context: ReaderContext
+    ) -> Household.IsMemberResponse:
+        return Household.IsMemberResponse(
+            member=bool(context.auth and context.auth.user_id in self.state.member_ids)
+        )
+
 
 class TaskServicer(Task.Servicer):
+    async def _ensure_member(self, context: ReaderContext | WriterContext) -> None:
+        membership = await Household.ref(self.state.household_id).is_member(context)
+        if not membership.member:
+            raise PermissionError("Only household members may access this task.")
+
     async def create(
         self, context: WriterContext, request: Task.CreateRequest
     ) -> None:
@@ -126,6 +138,7 @@ class TaskServicer(Task.Servicer):
             self.state.status = "open"
 
     async def details(self, context: ReaderContext) -> Task.DetailsResponse:
+        await self._ensure_member(context)
         return Task.DetailsResponse(
             household_id=self.state.household_id,
             title=self.state.title,
@@ -138,6 +151,7 @@ class TaskServicer(Task.Servicer):
     async def update(
         self, context: WriterContext, request: Task.UpdateRequest
     ) -> None:
+        await self._ensure_member(context)
         if request.title:
             self.state.title = request.title
         if request.notes:
@@ -147,7 +161,9 @@ class TaskServicer(Task.Servicer):
         self.state.assignee_id = request.assignee_id
 
     async def complete(self, context: WriterContext) -> None:
+        await self._ensure_member(context)
         self.state.status = "completed"
 
     async def reopen(self, context: WriterContext) -> None:
+        await self._ensure_member(context)
         self.state.status = "open"

@@ -94,6 +94,10 @@ class BoardResponse(Model):
     tasks: list[TaskSummary] = Field(tag=3, default_factory=list, description="Most recent household tasks.")
 
 
+class IsMemberResponse(Model):
+    member: bool = Field(tag=1, default=False, description="Whether the caller belongs to this household.")
+
+
 class TaskState(Model):
     household_id: str = Field(tag=1, default="", description="Household that owns this task.")
     creator_id: str = Field(tag=2, default="", description="Member who created the task.")
@@ -148,6 +152,7 @@ api = API(
             invite_member=Transaction(mode=Exclusive(), request=InviteMemberRequest, response=None, description="Invite a family member; only the parent may do this.", mcp=Tool()),
             add_task=Transaction(mode=Shared(), request=AddTaskRequest, response=AddTaskResponse, description="Create and index a household task.", mcp=Tool()),
             board=Reader(request=None, response=BoardResponse, description="Read the household board and its recent tasks.", mcp=Tool()),
+            is_member=Reader(request=None, response=IsMemberResponse, description="Check whether the caller belongs to this household.", mcp=None),
             show_board=UI(request=None, path="frontend/mcp/household-board", title="Household board", description="Open a live board for this household."),
         ),
     ),

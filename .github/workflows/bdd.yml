@@ -46,7 +46,13 @@ jobs:
       - name: Generate Reboot API bindings
         run: uv run rbt generate
 
-      - name: Run authenticated household BDD scenario
+      - name: Install Chromium for browser BDD
+        run: uv run playwright install --with-deps chromium
+
+      - name: Run browser-backed OAuth BDD scenario
+        run: timeout 10m uv run pytest -vv -s tests/family_task_management_web_test.py
+
+      - name: Run authenticated household domain BDD scenario
         run: timeout 10m uv run pytest -vv -s tests/family_task_management_test.py
 
       - name: Capture Docker diagnostics on failure

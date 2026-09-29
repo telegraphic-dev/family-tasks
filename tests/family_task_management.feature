@@ -8,10 +8,10 @@ Feature: A family can coordinate household tasks
 
     @blocked
     Scenario: A parent creates a household and adds a task
-      The Reboot 1.6 in-process harness currently stalls while auto-constructing
-      the authenticated `User` actor for this dual-front-door app. The scenario
-      remains as the executable specification and is skipped until that framework
-      interaction is resolved; production-shaped code is type-checked and built.
+      Reboot 1.6's in-process BDD harness stalls while resolving an
+      authenticated User actor for an application with OAuth. The scenario
+      is retained as the executable specification until that framework
+      interaction is resolved.
 
       Given the application is up
       And "alice" is an authenticated user

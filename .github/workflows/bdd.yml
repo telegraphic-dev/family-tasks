@@ -1,4 +1,4 @@
-name: Reboot BDD
+name: Family task BDD
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   bdd:
-    name: Browser-backed family task scenario
+    name: Authenticated household scenario
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:

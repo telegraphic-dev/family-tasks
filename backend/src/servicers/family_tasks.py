@@ -25,11 +25,16 @@ class UserServicer(User.Servicer):
     async def create_household(
         self, context: TransactionContext, request: User.CreateHouseholdRequest
     ) -> User.CreateHouseholdResponse:
+        owner_id = (
+            context.auth.user_id
+            if context.auth is not None and context.auth.user_id is not None
+            else context.state_id
+        )
         household, _ = await Household.create(
             context,
             str(uuid4()),
             name=request.name.strip() or "Our household",
-            owner_id=context.state_id,
+            owner_id=owner_id,
         )
         self.state.household_ids.append(household.state_id)
         return User.CreateHouseholdResponse(household_id=household.state_id)

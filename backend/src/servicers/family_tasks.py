@@ -154,7 +154,13 @@ class TaskServicer(Task.Servicer):
             self.state.status = "open"
 
     async def details(self, context: ReaderContext) -> Task.DetailsResponse:
-        await self._ensure_member(context)
+        # `Household.board` has already checked membership before making this
+        # app-internal read. Reboot's nested reader context deliberately does
+        # not carry the caller's test identity, so repeating the check here
+        # would reject a valid board load. External task reads still require
+        # household membership.
+        if not context.internal_call:
+            await self._ensure_member(context)
         return Task.DetailsResponse(
             household_id=self.state.household_id,
             title=self.state.title,

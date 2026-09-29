@@ -2,6 +2,7 @@ from uuid import uuid4
 
 from family_tasks.v1.family_tasks import HouseholdSummary, TaskSummary
 from family_tasks.v1.family_tasks_rbt import Household, Task, User
+from reboot.aio.auth.authorizers import allow
 from reboot.aio.contexts import ReaderContext, TransactionContext, WriterContext
 from reboot.std.collections.ordered_map.v1.ordered_map import OrderedMap
 
@@ -47,6 +48,12 @@ class UserServicer(User.Servicer):
 
 
 class HouseholdServicer(Household.Servicer):
+    def authorizer(self):
+        # Membership is enforced inside each method, where the complete
+        # household state is available. Reboot's default actor-level policy
+        # would reject member access before that guard can run.
+        return allow()
+
     async def create(
         self, context: WriterContext, request: Household.CreateRequest
     ) -> None:
@@ -125,6 +132,10 @@ class HouseholdServicer(Household.Servicer):
 
 
 class TaskServicer(Task.Servicer):
+    def authorizer(self):
+        # Task membership is derived from its household in `_ensure_member`.
+        return allow()
+
     async def _ensure_member(self, context: ReaderContext | WriterContext) -> None:
         membership = await Household.ref(self.state.household_id).is_member(context)
         if not membership.member:

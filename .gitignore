@@ -1,0 +1,13 @@
+.rbt/
+backend/api/
+frontend/api/
+.env
+*.recordings/
+.venv/
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+node_modules/
+frontend/node_modules/
+frontend/dist/

@@ -1,0 +1,56 @@
+name: Reboot BDD
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  bdd:
+    name: Browser-backed family task scenario
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Verify Docker is available for Reboot Envoy
+        run: docker version
+
+      - name: Install Python dependencies
+        run: uv sync --locked --all-groups
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Run authenticated household BDD scenario
+        run: timeout 10m uv run pytest -vv -s tests/family_task_management_test.py
+
+      - name: Capture Docker diagnostics on failure
+        if: failure()
+        run: |
+          docker ps -a
+          for id in $(docker ps -aq --filter ancestor=envoyproxy/envoy:v1.38.4); do
+            echo "=== Envoy $id ==="
+            docker logs "$id" || true
+          done

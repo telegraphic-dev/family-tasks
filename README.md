@@ -4,6 +4,14 @@ A shared household task manager built with [Reboot](https://reboot.dev/). It exp
 
 ## Local development
 
+Install the project toolchain with [mise](https://mise.jdx.dev/):
+
+```sh
+mise install
+```
+
+This selects the locked Python 3.12 and uv toolchain, plus Node.js 24 required by Portless. GitHub Actions uses the same configuration with its committed `ci` overlay, which pins Node.js 22 to match the production frontend image and browser BDD. Then start the app:
+
 ```sh
 uv sync
 uv run rbt generate

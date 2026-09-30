@@ -2,7 +2,8 @@ from uuid import uuid4
 
 from family_tasks.v1.family_tasks import HouseholdSummary, TaskSummary
 from family_tasks.v1.family_tasks_rbt import Household, Task, User
-from reboot.aio.auth.authorizers import allow
+from rbt.v1alpha1 import errors_pb2
+from reboot.aio.auth.authorizers import allow_if
 from reboot.aio.call import Options
 from reboot.aio.contexts import ReaderContext, TransactionContext, WriterContext
 from reboot.std.collections.ordered_map.v1.ordered_map import OrderedMap
@@ -53,10 +54,20 @@ class UserServicer(User.Servicer):
 
 class HouseholdServicer(Household.Servicer):
     def authorizer(self):
-        # Membership is enforced inside each method, where the complete
-        # household state is available. Reboot's default actor-level policy
-        # would reject member access before that guard can run.
-        return allow()
+        def household_member_or_internal(*, context, state, **kwargs):
+            # Factory calls may only be made by the application transaction
+            # that creates a household for an authenticated User actor.
+            if context.app_internal:
+                return errors_pb2.Ok()
+            if state is None:
+                return errors_pb2.PermissionDenied()
+            if context.auth is None or context.auth.user_id is None:
+                return errors_pb2.Unauthenticated()
+            if context.auth.user_id in state.member_ids:
+                return errors_pb2.Ok()
+            return errors_pb2.PermissionDenied()
+
+        return allow_if(all=[household_member_or_internal])
 
     async def create(
         self, context: TransactionContext, request: Household.CreateRequest
@@ -141,8 +152,27 @@ class HouseholdServicer(Household.Servicer):
 
 class TaskServicer(Task.Servicer):
     def authorizer(self):
-        # Task membership is derived from its household in `_ensure_member`.
-        return allow()
+        async def task_member_or_internal(*, context, state, **kwargs):
+            # Only Household.add_task may construct a Task. Existing tasks
+            # authorize against their owning household with the caller's
+            # verified bearer token, never request-controlled metadata.
+            if context.app_internal:
+                return errors_pb2.Ok()
+            if state is None:
+                return errors_pb2.PermissionDenied()
+            if context.auth is None or context.auth.user_id is None:
+                return errors_pb2.Unauthenticated()
+            membership = await Household.ref(state.household_id).is_member(
+                context,
+                Options(bearer_token=context.caller_bearer_token),
+            )
+            return (
+                errors_pb2.Ok()
+                if membership.member
+                else errors_pb2.PermissionDenied()
+            )
+
+        return allow_if(all=[task_member_or_internal])
 
     async def _ensure_member(self, context: ReaderContext | WriterContext) -> None:
         membership = await Household.ref(self.state.household_id).is_member(

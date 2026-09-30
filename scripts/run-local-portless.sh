@@ -12,7 +12,9 @@ env_file="$state_home/local.env"
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
 mise_exec() {
-  mise -C "$project_root" -E portless exec --locked -- "$@"
+  # Keep unrelated global tool declarations out of this locked project run.
+  MISE_GLOBAL_CONFIG_FILE="$project_root/.mise-launcher-global.toml" \
+    mise -C "$project_root" -E portless exec --locked -- "$@"
 }
 
 require() {
@@ -80,11 +82,9 @@ curl --fail --silent --show-error --max-time 2 "http://127.0.0.1:${host_port}/__
 mise_exec portless proxy start --https --port 443
 mise_exec portless alias "$app_name" "$host_port" --force
 proxy_url="$(mise_exec portless get "$app_name" --no-worktree)"
-expected_proxy_url="https://${app_name}.localhost"
-if [[ "$proxy_url" != "$expected_proxy_url" ]]; then
-  printf 'Portless is not serving the required HTTPS URL. Expected %s, got %s.\n' \
-    "$expected_proxy_url" "$proxy_url" >&2
-  printf 'Stop the existing proxy with `portless proxy stop`, then rerun this script.\n' >&2
+if [[ ! "$proxy_url" =~ ^https://[^/:]+$ ]]; then
+  printf 'Portless did not return an HTTPS hostname for %s: %s\n' \
+    "$app_name" "$proxy_url" >&2
   exit 1
 fi
 

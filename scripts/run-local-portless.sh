@@ -17,6 +17,16 @@ require() {
   }
 }
 
+open_url() {
+  if command -v open >/dev/null 2>&1; then
+    open "$1" >/dev/null 2>&1 &
+  elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "$1" >/dev/null 2>&1 &
+  else
+    printf 'Could not open a browser automatically; open %s\n' "$1" >&2
+  fi
+}
+
 require docker
 require portless
 require node
@@ -74,5 +84,7 @@ if [[ "$proxy_url" != "$expected_proxy_url" ]]; then
   exit 1
 fi
 
-printf '\nFamily Tasks is running at:\n  %s/__/frontend/web/\n' "$proxy_url"
+app_url="${proxy_url}/__/frontend/web/"
+printf '\nFamily Tasks is running at:\n  %s\n' "$app_url"
 printf 'Container: %s  |  State volume: %s\n' "$container_name" "$state_volume"
+open_url "$app_url"

@@ -18,17 +18,17 @@ Open `http://localhost:4444` for the browser app. The Reboot development provide
 
 After a merge to `main`, GitHub publishes `ghcr.io/telegraphic-dev/family-tasks:latest` and immutable `sha-<commit>` tags. The image contains the generated Reboot bindings and compiled browser/MCP frontends; it needs no source checkout or separate frontend container.
 
-For a local demo, use a durable local state volume and a stable root key. `REBOOT_DEVELOPMENT_OAUTH=1` enables Reboot's fake account picker **only** for this local run:
+For a local demo, run the image in Reboot development mode. `RBT_DEV=true` enables Reboot's local account picker; this is intentionally a local-only setting:
 
 ```sh
 export REBOOT_CRYPTO_ROOT_KEYS="v1:$(openssl rand -base64 48 | tr -d '\n')"
 docker run --rm -p 9991:9991 -v family-tasks-data:/data \
   -e REBOOT_CRYPTO_ROOT_KEYS \
-  -e REBOOT_DEVELOPMENT_OAUTH=1 \
+  -e RBT_DEV=true \
   ghcr.io/telegraphic-dev/family-tasks:latest
 ```
 
-Open `http://localhost:9991`. Keep the same root key when reusing `family-tasks-data`; changing it makes the encrypted state unreadable. Without `REBOOT_DEVELOPMENT_OAUTH=1`, the image refuses to start until a real production OAuth provider is configured.
+Open `http://localhost:9991`. Keep the same root key when reusing `family-tasks-data`; changing it makes encrypted state unreadable. `RBT_DEV=true` selects Reboot's development runtime as well as its fake OAuth provider, so never use it for an internet-facing deployment. Without it, production OAuth is deliberately unconfigured and the image fails closed until a real provider is configured.
 
 ## Current scope
 

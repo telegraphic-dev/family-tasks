@@ -11,9 +11,9 @@ Feature: Family task management in the browser
     And "alice" clicks the "Sign in" button in the web app
     And "alice" clicks the "Alice" link in the web app
     Then "alice" is signed in to the web app with their user id saved as "alice user id"
-    When "alice" fills "Household name" in the web app with `Home Team`
+    When "alice" fills "Household name" in the web app with `"Home Team"`
     And "alice" clicks the "Create household" button in the web app
     Then "alice" eventually sees "Home Team" in the web app within 10 seconds
-    When "alice" fills "New task" in the web app with `Empty the dishwasher`
+    When "alice" fills "New task" in the web app with `"Empty the dishwasher"`
     And "alice" clicks the "Add task" button in the web app
     Then "alice" eventually sees "Empty the dishwasher" in the web app within 10 seconds

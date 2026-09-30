@@ -1,0 +1,7 @@
+[tools]
+# Matches the GitHub Actions Python runtime.
+python = "3.12"
+# Portless requires Node.js 24+; this also supplies npm for the frontend.
+node = "24"
+# Matches the reproducible Docker build toolchain.
+uv = "0.11.13"

@@ -4,6 +4,14 @@ A shared household task manager built with [Reboot](https://reboot.dev/). It exp
 
 ## Local development
 
+Install the project toolchain with [mise](https://mise.jdx.dev/):
+
+```sh
+mise install
+```
+
+This selects Python 3.12, Node.js 24 (required by Portless), and the same uv release used by the Docker build. Then start the app:
+
 ```sh
 uv sync
 uv run rbt generate

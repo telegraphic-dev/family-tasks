@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - Dockerfile
+      - docker-entrypoint.py
       - .dockerignore
       - .github/workflows/container-image.yml
       - .rbtrc

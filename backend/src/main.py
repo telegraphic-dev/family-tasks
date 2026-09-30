@@ -16,6 +16,7 @@ async def main() -> None:
         libraries=[ordered_map_library()],
         oauth=OAuth(
             provider=OAuthProviderByEnvironment(dev=Development(), prod=None),
+            allowed_origins=[],
         ),
         example_prompts=example_prompts,
     ).run()

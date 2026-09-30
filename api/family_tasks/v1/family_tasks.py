@@ -49,6 +49,14 @@ class AddHouseholdRequest(Model):
     )
 
 
+class TaskSummary(Model):
+    task_id: str = Field(tag=1, default="", description="ID of one task.")
+    title: str = Field(tag=2, default="", description="The task's short name.")
+    status: str = Field(tag=3, default="", description="Whether the task is open or completed.")
+    assignee_id: str = Field(tag=4, default="", description="Member currently responsible, if any.")
+    due_date: str = Field(tag=5, default="", description="Optional ISO-8601 due date.")
+
+
 class HouseholdState(Model):
     name: str = Field(tag=1, default="", description="The household's display name.")
     owner_id: str = Field(tag=2, default="", description="The parent who created this household.")
@@ -78,14 +86,6 @@ class AddTaskRequest(Model):
 
 class AddTaskResponse(Model):
     task_id: str = Field(tag=1, default="", description="ID of the task that was created.")
-
-
-class TaskSummary(Model):
-    task_id: str = Field(tag=1, default="", description="ID of one task.")
-    title: str = Field(tag=2, default="", description="The task's short name.")
-    status: str = Field(tag=3, default="", description="Whether the task is open or completed.")
-    assignee_id: str = Field(tag=4, default="", description="Member currently responsible, if any.")
-    due_date: str = Field(tag=5, default="", description="Optional ISO-8601 due date.")
 
 
 class BoardResponse(Model):
@@ -148,7 +148,7 @@ api = API(
         state=HouseholdState,
         description="One family's shared task board and its membership boundary.",
         methods=Methods(
-            create=Writer(request=CreateHouseholdActorRequest, response=None, factory=True, description="Create a household with its parent as the first member.", mcp=None),
+            create=Transaction(mode=Exclusive(), request=CreateHouseholdActorRequest, response=None, factory=True, description="Create a household with its parent as the first member.", mcp=None),
             invite_member=Transaction(mode=Exclusive(), request=InviteMemberRequest, response=None, description="Invite a family member; only the parent may do this.", mcp=Tool()),
             add_task=Transaction(mode=Shared(), request=AddTaskRequest, response=AddTaskResponse, description="Create and index a household task.", mcp=Tool()),
             board=Reader(request=None, response=BoardResponse, description="Read the household board and its recent tasks.", mcp=Tool()),

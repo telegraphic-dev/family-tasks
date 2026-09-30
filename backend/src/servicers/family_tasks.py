@@ -2,6 +2,9 @@ from uuid import uuid4
 
 from family_tasks.v1.family_tasks import HouseholdSummary, TaskSummary
 from family_tasks.v1.family_tasks_rbt import Household, Task, User
+from rbt.v1alpha1 import errors_pb2
+from reboot.aio.auth.authorizers import allow_if
+from reboot.aio.call import Options
 from reboot.aio.contexts import ReaderContext, TransactionContext, WriterContext
 from reboot.std.collections.ordered_map.v1.ordered_map import OrderedMap
 
@@ -16,7 +19,10 @@ class UserServicer(User.Servicer):
     ) -> User.ListHouseholdsResponse:
         households = []
         for household_id in self.state.household_ids:
-            board = await Household.ref(household_id).board(context)
+            board = await Household.ref(household_id).board(
+                context,
+                Options(bearer_token=context.caller_bearer_token),
+            )
             households.append(
                 HouseholdSummary(household_id=household_id, name=board.name)
             )
@@ -25,11 +31,16 @@ class UserServicer(User.Servicer):
     async def create_household(
         self, context: TransactionContext, request: User.CreateHouseholdRequest
     ) -> User.CreateHouseholdResponse:
+        owner_id = (
+            context.auth.user_id
+            if context.auth is not None and context.auth.user_id is not None
+            else context.state_id
+        )
         household, _ = await Household.create(
             context,
             str(uuid4()),
             name=request.name.strip() or "Our household",
-            owner_id=context.state_id,
+            owner_id=owner_id,
         )
         self.state.household_ids.append(household.state_id)
         return User.CreateHouseholdResponse(household_id=household.state_id)
@@ -42,14 +53,31 @@ class UserServicer(User.Servicer):
 
 
 class HouseholdServicer(Household.Servicer):
+    def authorizer(self):
+        def household_member_or_internal(*, context, state, **kwargs):
+            # Factory calls may only be made by the application transaction
+            # that creates a household for an authenticated User actor.
+            if context.app_internal:
+                return errors_pb2.Ok()
+            if state is None:
+                return errors_pb2.PermissionDenied()
+            if context.auth is None or context.auth.user_id is None:
+                return errors_pb2.Unauthenticated()
+            if context.auth.user_id in state.member_ids:
+                return errors_pb2.Ok()
+            return errors_pb2.PermissionDenied()
+
+        return allow_if(all=[household_member_or_internal])
+
     async def create(
-        self, context: WriterContext, request: Household.CreateRequest
+        self, context: TransactionContext, request: Household.CreateRequest
     ) -> None:
         if context.constructor:
             self.state.name = request.name
             self.state.owner_id = request.owner_id
             self.state.member_ids = [request.owner_id]
             self.state.task_index_id = str(uuid4())
+            await OrderedMap.ref(self.state.task_index_id).Create(context)
 
     async def invite_member(
         self, context: TransactionContext, request: Household.InviteMemberRequest
@@ -95,7 +123,10 @@ class HouseholdServicer(Household.Servicer):
         tasks = []
         for entry in page.entries:
             task_id = entry.bytes.decode()
-            details = await Task.ref(task_id).details(context)
+            details = await Task.ref(task_id).details(
+                context,
+                Options(bearer_token=context.caller_bearer_token),
+            )
             tasks.append(
                 TaskSummary(
                     task_id=task_id,
@@ -120,8 +151,34 @@ class HouseholdServicer(Household.Servicer):
 
 
 class TaskServicer(Task.Servicer):
+    def authorizer(self):
+        async def task_member_or_internal(*, context, state, **kwargs):
+            # Only Household.add_task may construct a Task. Existing tasks
+            # authorize against their owning household with the caller's
+            # verified bearer token, never request-controlled metadata.
+            if context.app_internal:
+                return errors_pb2.Ok()
+            if state is None:
+                return errors_pb2.PermissionDenied()
+            if context.auth is None or context.auth.user_id is None:
+                return errors_pb2.Unauthenticated()
+            membership = await Household.ref(state.household_id).is_member(
+                context,
+                Options(bearer_token=context.caller_bearer_token),
+            )
+            return (
+                errors_pb2.Ok()
+                if membership.member
+                else errors_pb2.PermissionDenied()
+            )
+
+        return allow_if(all=[task_member_or_internal])
+
     async def _ensure_member(self, context: ReaderContext | WriterContext) -> None:
-        membership = await Household.ref(self.state.household_id).is_member(context)
+        membership = await Household.ref(self.state.household_id).is_member(
+            context,
+            Options(bearer_token=context.caller_bearer_token),
+        )
         if not membership.member:
             raise PermissionError("Only household members may access this task.")
 

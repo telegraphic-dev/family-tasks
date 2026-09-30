@@ -6,13 +6,7 @@ Feature: A family can coordinate household tasks
   Rule: Household tasks are visible to household members
     A task belongs to one household, and a member sees it on that household's board.
 
-    @blocked
     Scenario: A parent creates a household and adds a task
-      The Reboot 1.6 in-process harness currently stalls while auto-constructing
-      the authenticated `User` actor for this dual-front-door app. The scenario
-      remains as the executable specification and is skipped until that framework
-      interaction is resolved; production-shaped code is type-checked and built.
-
       Given the application is up
       And "alice" is an authenticated user
       When "alice" does a `create_household` with `name="Home Team"` on `User` of "alice"

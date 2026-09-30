@@ -26,11 +26,9 @@ ENV PORT=9991 \
     RBT_STATE_DIRECTORY=/data
 
 COPY backend/src/ backend/src/
-COPY docker-entrypoint.py ./
 COPY --from=frontend-build /app/frontend/dist/ frontend/dist/
 
 VOLUME ["/data"]
 EXPOSE 9991
 
-ENTRYPOINT ["python", "/app/docker-entrypoint.py"]
 CMD ["rbt", "serve", "run"]

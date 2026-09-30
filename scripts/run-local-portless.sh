@@ -49,18 +49,6 @@ fi
 
 docker info >/dev/null
 
-# Portless creates/trusts its local CA on first use and binds loopback HTTPS.
-# Pin the proxy to the standard HTTPS port so the browser URL has no port suffix.
-# Registering an alias does not require the target container to be up yet.
-mise_exec portless proxy start --https --port 443
-mise_exec portless alias "$app_name" "$host_port" --force
-proxy_url="$(mise_exec portless get "$app_name" --no-worktree)"
-if [[ ! "$proxy_url" =~ ^https://[^/:]+$ ]]; then
-  printf 'Portless did not return an HTTPS hostname for %s: %s\n' \
-    "$app_name" "$proxy_url" >&2
-  exit 1
-fi
-
 mkdir -p "$state_home"
 if [[ ! -f "$env_file" ]]; then
   umask 077
@@ -78,7 +66,6 @@ docker run --detach \
   --volume "${state_volume}:/data" \
   --env-file "$env_file" \
   --env RBT_DEV=true \
-  --env FAMILY_TASKS_PUBLIC_URL="$proxy_url" \
   "$image" >/dev/null
 
 for ((attempt = 0; attempt < 45; attempt++)); do
@@ -89,6 +76,17 @@ for ((attempt = 0; attempt < 45; attempt++)); do
 done
 
 curl --fail --silent --show-error --max-time 2 "http://127.0.0.1:${host_port}/__/frontend/web/" >/dev/null
+
+# Portless creates/trusts its local CA on first use and binds loopback HTTPS.
+# Pin the proxy to the standard HTTPS port so the browser URL has no port suffix.
+mise_exec portless proxy start --https --port 443
+mise_exec portless alias "$app_name" "$host_port" --force
+proxy_url="$(mise_exec portless get "$app_name" --no-worktree)"
+if [[ ! "$proxy_url" =~ ^https://[^/:]+$ ]]; then
+  printf 'Portless did not return an HTTPS hostname for %s: %s\n' \
+    "$app_name" "$proxy_url" >&2
+  exit 1
+fi
 
 app_url="${proxy_url}/__/frontend/web/"
 printf '\nFamily Tasks is running at:\n  %s\n' "$app_url"

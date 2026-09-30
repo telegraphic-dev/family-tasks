@@ -66,11 +66,6 @@ class HouseholdState(Model):
     task_index_id: str = Field(
         tag=4, default="", description="ID of the ordered index containing this household's task IDs."
     )
-    tasks: list[TaskSummary] = Field(
-        tag=5,
-        default_factory=list,
-        description="Task summaries shown on this household's shared board.",
-    )
 
 
 class CreateHouseholdActorRequest(Model):

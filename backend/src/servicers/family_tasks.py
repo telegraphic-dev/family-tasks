@@ -3,6 +3,7 @@ from uuid import uuid4
 from family_tasks.v1.family_tasks import HouseholdSummary, TaskSummary
 from family_tasks.v1.family_tasks_rbt import Household, Task, User
 from reboot.aio.auth.authorizers import allow
+from reboot.aio.call import Options
 from reboot.aio.contexts import ReaderContext, TransactionContext, WriterContext
 from reboot.std.collections.ordered_map.v1.ordered_map import OrderedMap
 
@@ -93,15 +94,6 @@ class HouseholdServicer(Household.Servicer):
         await OrderedMap.ref(self.state.task_index_id).insert(
             context, key=str(uuid4()), bytes=task.state_id.encode()
         )
-        self.state.tasks.append(
-            TaskSummary(
-                task_id=task.state_id,
-                title=request.title.strip() or "Untitled task",
-                status="open",
-                assignee_id=request.assignee_id,
-                due_date=request.due_date,
-            )
-        )
         return Household.AddTaskResponse(task_id=task.state_id)
 
     async def board(
@@ -110,10 +102,29 @@ class HouseholdServicer(Household.Servicer):
         caller_id = context.auth.user_id if context.auth else ""
         if caller_id not in self.state.member_ids:
             raise PermissionError("Only household members may view this board.")
+        page = await OrderedMap.ref(self.state.task_index_id).reverse_range(
+            context, limit=100
+        )
+        tasks = []
+        for entry in page.entries:
+            task_id = entry.bytes.decode()
+            details = await Task.ref(task_id).details(
+                context,
+                Options(bearer_token=context.caller_bearer_token),
+            )
+            tasks.append(
+                TaskSummary(
+                    task_id=task_id,
+                    title=details.title,
+                    status=details.status,
+                    assignee_id=details.assignee_id,
+                    due_date=details.due_date,
+                )
+            )
         return Household.BoardResponse(
             name=self.state.name,
             member_ids=self.state.member_ids,
-            tasks=self.state.tasks,
+            tasks=tasks,
         )
 
     async def is_member(

@@ -145,7 +145,10 @@ class TaskServicer(Task.Servicer):
         return allow()
 
     async def _ensure_member(self, context: ReaderContext | WriterContext) -> None:
-        membership = await Household.ref(self.state.household_id).is_member(context)
+        membership = await Household.ref(self.state.household_id).is_member(
+            context,
+            Options(bearer_token=context.caller_bearer_token),
+        )
         if not membership.member:
             raise PermissionError("Only household members may access this task.")
 

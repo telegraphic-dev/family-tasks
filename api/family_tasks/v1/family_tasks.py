@@ -148,7 +148,7 @@ api = API(
         state=HouseholdState,
         description="One family's shared task board and its membership boundary.",
         methods=Methods(
-            create=Writer(request=CreateHouseholdActorRequest, response=None, factory=True, description="Create a household with its parent as the first member.", mcp=None),
+            create=Transaction(mode=Exclusive(), request=CreateHouseholdActorRequest, response=None, factory=True, description="Create a household with its parent as the first member.", mcp=None),
             invite_member=Transaction(mode=Exclusive(), request=InviteMemberRequest, response=None, description="Invite a family member; only the parent may do this.", mcp=Tool()),
             add_task=Transaction(mode=Shared(), request=AddTaskRequest, response=AddTaskResponse, description="Create and index a household task.", mcp=Tool()),
             board=Reader(request=None, response=BoardResponse, description="Read the household board and its recent tasks.", mcp=Tool()),

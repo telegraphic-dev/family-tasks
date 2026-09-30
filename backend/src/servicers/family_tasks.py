@@ -59,13 +59,14 @@ class HouseholdServicer(Household.Servicer):
         return allow()
 
     async def create(
-        self, context: WriterContext, request: Household.CreateRequest
+        self, context: TransactionContext, request: Household.CreateRequest
     ) -> None:
         if context.constructor:
             self.state.name = request.name
             self.state.owner_id = request.owner_id
             self.state.member_ids = [request.owner_id]
             self.state.task_index_id = str(uuid4())
+            await OrderedMap.ref(self.state.task_index_id).Create(context)
 
     async def invite_member(
         self, context: TransactionContext, request: Household.InviteMemberRequest

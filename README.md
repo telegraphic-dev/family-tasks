@@ -28,7 +28,7 @@ docker run --rm -p 9991:9991 -v family-tasks-data:/data \
   ghcr.io/telegraphic-dev/family-tasks:latest
 ```
 
-Open `http://localhost:9991`. Keep the same root key when reusing `family-tasks-data`; changing it makes encrypted state unreadable. `RBT_DEV=true` selects Reboot's development runtime as well as its fake OAuth provider, so never use it for an internet-facing deployment. Without it, production OAuth is deliberately unconfigured and the image fails closed until a real provider is configured.
+Open `http://localhost:9991/__/frontend/web/` for the Family Tasks browser app. `http://localhost:9991/` is Reboot's MCP integration guide; it is the expected root endpoint for a Reboot application. Keep the same root key when reusing `family-tasks-data`; changing it makes encrypted state unreadable. `RBT_DEV=true` selects Reboot's development runtime as well as its fake OAuth provider, so never use it for an internet-facing deployment. Without it, production OAuth is deliberately unconfigured and the image fails closed until a real provider is configured.
 
 ## Current scope
 

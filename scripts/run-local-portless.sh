@@ -62,8 +62,17 @@ done
 curl --fail --silent --show-error --max-time 2 "http://127.0.0.1:${host_port}/__/frontend/web/" >/dev/null
 
 # Portless creates/trusts its local CA on first use and binds loopback HTTPS.
-portless proxy start --https
+# Pin the proxy to the standard HTTPS port so the browser URL has no port suffix.
+portless proxy start --https --port 443
 portless alias "$app_name" "$host_port" --force
+proxy_url="$(portless get "$app_name" --no-worktree)"
+expected_proxy_url="https://${app_name}.localhost"
+if [[ "$proxy_url" != "$expected_proxy_url" ]]; then
+  printf 'Portless is not serving the required HTTPS URL. Expected %s, got %s.\n' \
+    "$expected_proxy_url" "$proxy_url" >&2
+  printf 'Stop the existing proxy with `portless proxy stop`, then rerun this script.\n' >&2
+  exit 1
+fi
 
-printf '\nFamily Tasks is running at:\n  https://%s.localhost/__/frontend/web/\n' "$app_name"
+printf '\nFamily Tasks is running at:\n  %s/__/frontend/web/\n' "$proxy_url"
 printf 'Container: %s  |  State volume: %s\n' "$container_name" "$state_volume"

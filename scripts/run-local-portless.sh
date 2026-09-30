@@ -12,7 +12,7 @@ env_file="$state_home/local.env"
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
 mise_exec() {
-  mise -C "$project_root" exec --locked -- "$@"
+  mise -C "$project_root" -E portless exec --locked -- "$@"
 }
 
 require() {

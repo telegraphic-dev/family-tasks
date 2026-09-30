@@ -46,7 +46,7 @@ For the browser OAuth flow, use the launcher instead of direct HTTP:
 scripts/run-local-portless.sh
 ```
 
-It starts the Docker image and opens `https://family-tasks.localhost/__/frontend/web/`. The script invokes Mise directly to install and run the locked Node.js 24 and Portless toolchain, so it only requires Docker, Mise, OpenSSL, and curl on the host.
+It starts the Docker image and opens `https://family-tasks.localhost/__/frontend/web/`. The script invokes the locked Mise `portless` environment directly to install and run Node.js 24 and Portless, so it only requires Docker, Mise, OpenSSL, and curl on the host.
 
 ## Current scope
 

@@ -1,0 +1,21 @@
+services:
+  family-tasks:
+    image: ${FAMILY_TASKS_IMAGE:-ghcr.io/telegraphic-dev/family-tasks:latest}
+    environment:
+      RBT_DEV: "true"
+      REBOOT_CRYPTO_ROOT_KEYS: ${REBOOT_CRYPTO_ROOT_KEYS:?set a stable root key in .env.local}
+    volumes:
+      - family-tasks-data:/data
+
+  local-https:
+    image: caddy:2.10-alpine
+    depends_on:
+      - family-tasks
+    ports:
+      - "${FAMILY_TASKS_PORT:-9991}:443"
+    volumes:
+      - ./Caddyfile.local:/etc/caddy/Caddyfile:ro
+      - ./.local-certs:/certs:ro
+
+volumes:
+  family-tasks-data:

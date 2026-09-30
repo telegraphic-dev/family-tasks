@@ -2,6 +2,8 @@
 backend/api/
 frontend/api/
 .env
+.env.local
+.local-certs/
 *.recordings/
 .venv/
 __pycache__/

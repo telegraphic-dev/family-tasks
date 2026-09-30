@@ -18,17 +18,19 @@ Open `http://localhost:4444` for the browser app. The Reboot development provide
 
 After a merge to `main`, GitHub publishes `ghcr.io/telegraphic-dev/family-tasks:latest` and immutable `sha-<commit>` tags. The image contains the generated Reboot bindings and compiled browser/MCP frontends; it needs no source checkout or separate frontend container.
 
-For a local demo, run the image in Reboot development mode. `RBT_DEV=true` enables Reboot's local account picker; this is intentionally a local-only setting:
+For a local demo, use the included HTTPS proxy. Reboot's browser OAuth flow uses `Secure` cookies; Safari will not send those cookies over plain `http://localhost`. The proxy terminates locally trusted TLS, redirects `/` to the Family Tasks SPA, and keeps Reboot's MCP guide available behind its normal paths.
 
 ```sh
-export REBOOT_CRYPTO_ROOT_KEYS="v1:$(openssl rand -base64 48 | tr -d '\n')"
-docker run --rm -p 9991:9991 -v family-tasks-data:/data \
-  -e REBOOT_CRYPTO_ROOT_KEYS \
-  -e RBT_DEV=true \
-  ghcr.io/telegraphic-dev/family-tasks:latest
+brew install mkcert
+mkcert -install
+mkdir -p .local-certs
+mkcert -cert-file .local-certs/localhost.pem \
+  -key-file .local-certs/localhost-key.pem localhost
+printf 'REBOOT_CRYPTO_ROOT_KEYS=v1:%s\n' "$(openssl rand -base64 48 | tr -d '\n')" > .env.local
+docker compose --env-file .env.local -f compose.local.yml up
 ```
 
-Open `http://localhost:9991/__/frontend/web/` for the Family Tasks browser app. `http://localhost:9991/` is Reboot's MCP integration guide; it is the expected root endpoint for a Reboot application. Keep the same root key when reusing `family-tasks-data`; changing it makes encrypted state unreadable. `RBT_DEV=true` selects Reboot's development runtime as well as its fake OAuth provider, so never use it for an internet-facing deployment. Without it, production OAuth is deliberately unconfigured and the image fails closed until a real provider is configured.
+Open `https://localhost:9991`: it redirects to the Family Tasks browser app, and the Development OAuth picker works in Safari as well as Chromium. Keep `.env.local` and the `family-tasks-data` volume when reusing the demo; changing the root key makes encrypted state unreadable. `RBT_DEV=true` selects Reboot's development runtime and fake OAuth provider, so this compose file is local-only. Production OAuth is deliberately unconfigured and fails closed until a real provider is configured.
 
 ## Current scope
 

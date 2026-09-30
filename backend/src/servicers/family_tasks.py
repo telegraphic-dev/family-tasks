@@ -18,7 +18,10 @@ class UserServicer(User.Servicer):
     ) -> User.ListHouseholdsResponse:
         households = []
         for household_id in self.state.household_ids:
-            board = await Household.ref(household_id).board(context)
+            board = await Household.ref(household_id).board(
+                context,
+                Options(bearer_token=context.caller_bearer_token),
+            )
             households.append(
                 HouseholdSummary(household_id=household_id, name=board.name)
             )

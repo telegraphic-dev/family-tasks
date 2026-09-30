@@ -52,7 +52,7 @@ docker run --detach \
   --env RBT_DEV=true \
   "$image" >/dev/null
 
-for _ in $(seq 1 45); do
+for ((attempt = 0; attempt < 45; attempt++)); do
   if curl --fail --silent --show-error --max-time 2 "http://127.0.0.1:${host_port}/__/frontend/web/" >/dev/null; then
     break
   fi

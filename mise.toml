@@ -3,5 +3,7 @@
 python = "3.12"
 # Portless requires Node.js 24+; this also supplies npm for the frontend.
 node = "24"
+# Portless provides the host-side trusted HTTPS proxy for local Docker demos.
+"npm:portless" = "0.15.6"
 # Matches the reproducible Docker build toolchain.
 uv = "0.11.13"

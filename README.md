@@ -38,6 +38,16 @@ docker run --rm -p 9991:9991 -v family-tasks-data:/data \
 
 Open `http://localhost:9991`. Keep the same root key when reusing `family-tasks-data`; changing it makes encrypted state unreadable. `RBT_DEV=true` selects Reboot's development runtime as well as its fake OAuth provider, so never use it for an internet-facing deployment. Without it, production OAuth is deliberately unconfigured and the image fails closed until a real provider is configured.
 
+### Local HTTPS with Portless
+
+For the browser OAuth flow, use the launcher instead of direct HTTP:
+
+```sh
+scripts/run-local-portless.sh
+```
+
+It starts the Docker image and opens `https://family-tasks.localhost/__/frontend/web/`. The script invokes Mise directly to install and run the locked Node.js 24 and Portless toolchain, so it only requires Docker, Mise, OpenSSL, and curl on the host.
+
 ## Current scope
 
 - Parent-created households and member invitations

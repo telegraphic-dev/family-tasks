@@ -9,6 +9,11 @@ host_port="${FAMILY_TASKS_PORT:-9991}"
 state_volume="${FAMILY_TASKS_STATE_VOLUME:-family-tasks-data}"
 state_home="${XDG_STATE_HOME:-$HOME/.local/state}/family-tasks"
 env_file="$state_home/local.env"
+project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+
+mise_exec() {
+  mise -C "$project_root" exec --locked -- "$@"
+}
 
 require() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -28,12 +33,11 @@ open_url() {
 }
 
 require docker
-require portless
-require node
+require mise
 require openssl
 require curl
 
-node_version="$(node --version)"
+node_version="$(mise_exec node --version)"
 node_major="${node_version#v}"
 node_major="${node_major%%.*}"
 if [[ ! "$node_major" =~ ^[0-9]+$ ]] || (( node_major < 24 )); then
@@ -73,9 +77,9 @@ curl --fail --silent --show-error --max-time 2 "http://127.0.0.1:${host_port}/__
 
 # Portless creates/trusts its local CA on first use and binds loopback HTTPS.
 # Pin the proxy to the standard HTTPS port so the browser URL has no port suffix.
-portless proxy start --https --port 443
-portless alias "$app_name" "$host_port" --force
-proxy_url="$(portless get "$app_name" --no-worktree)"
+mise_exec portless proxy start --https --port 443
+mise_exec portless alias "$app_name" "$host_port" --force
+proxy_url="$(mise_exec portless get "$app_name" --no-worktree)"
 expected_proxy_url="https://${app_name}.localhost"
 if [[ "$proxy_url" != "$expected_proxy_url" ]]; then
   printf 'Portless is not serving the required HTTPS URL. Expected %s, got %s.\n' \

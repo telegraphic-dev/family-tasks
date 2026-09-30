@@ -1,0 +1,3 @@
+[tools]
+# The local Docker launcher uses this host-side HTTPS proxy.
+"npm:portless" = "0.15.6"

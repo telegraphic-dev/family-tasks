@@ -20,4 +20,5 @@ serve run --python
 serve run --frontend-dist-path=frontend/dist --frontend-root-path=frontend
 serve run --application=backend/src/main.py
 serve run --application-name=family-tasks
+serve run --servers=1
 serve run --tls=external

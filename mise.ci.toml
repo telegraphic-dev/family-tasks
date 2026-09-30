@@ -1,0 +1,3 @@
+[tools]
+# Match the production frontend image and the browser-BDD runtime.
+node = "22"

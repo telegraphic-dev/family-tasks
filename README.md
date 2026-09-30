@@ -10,7 +10,7 @@ Install the project toolchain with [mise](https://mise.jdx.dev/):
 mise install
 ```
 
-This selects the locked Python 3.12, Node.js 24 (required by Portless), and the same uv release used by the Docker build. GitHub Actions uses this exact Mise toolchain too. Then start the app:
+This selects the locked Python 3.12 and uv toolchain, plus Node.js 24 required by Portless. GitHub Actions uses the same configuration with its committed `ci` overlay, which pins Node.js 22 to match the production frontend image and browser BDD. Then start the app:
 
 ```sh
 uv sync

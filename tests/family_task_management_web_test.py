@@ -40,7 +40,10 @@ def rbt(reboot_event_loop: EventLoopThread) -> Iterator[Reboot]:
 
 
 @pytest.fixture
-def frontend() -> Iterator[Frontend]:
+def frontend(monkeypatch: pytest.MonkeyPatch) -> Iterator[Frontend]:
+    # The test Envoy deliberately uses 29990, not Reboot's default 9991.
+    # Vite gives an explicit environment value precedence over `.env`.
+    monkeypatch.setenv("VITE_REBOOT_URL", "http://127.0.0.1:29990")
     with vite(directory="frontend") as running_frontend:
         yield running_frontend
 

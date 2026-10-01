@@ -46,6 +46,10 @@ curl --fail --silent --show-error --max-time 2 \
 grep --quiet '<title>Family Tasks</title>' "$root_body"
 ! grep --ignore-case --quiet '^location:' "$root_headers"
 
+head_status="$(curl --silent --show-error --max-time 2 --head \
+  --header 'Accept: text/html' --output /dev/null --write-out '%{http_code}' "$origin/")"
+test "$head_status" = 200
+
 curl --fail --silent --show-error --max-time 2 \
   --header 'Accept: text/html' --dump-header "$deep_headers" \
   "$origin/households/demo?tab=open" --output "$deep_body"

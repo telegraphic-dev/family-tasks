@@ -12,6 +12,8 @@ static_resources:
                 "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
                 stat_prefix: family_tasks_root_ingress
                 codec_type: AUTO
+                upgrade_configs:
+                  - upgrade_type: websocket
                 route_config:
                   name: family_tasks_root_routes
                   virtual_hosts:
@@ -38,7 +40,9 @@ static_resources:
                             headers:
                               - name: ":method"
                                 string_match:
-                                  exact: GET
+                                  safe_regex:
+                                    google_re2: {}
+                                    regex: "^(GET|HEAD)$"
                               - name: accept
                                 string_match:
                                   safe_regex:

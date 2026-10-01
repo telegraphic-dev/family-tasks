@@ -5,6 +5,8 @@ on:
     paths:
       - Dockerfile
       - .dockerignore
+      - docker/**
+      - scripts/test-root-spa-ingress.sh
       - .github/workflows/container-image.yml
       - .rbtrc
       - pyproject.toml
@@ -21,6 +23,19 @@ permissions:
   packages: write
 
 jobs:
+  root-spa-ingress:
+    name: Verify root SPA ingress
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build runtime image
+        run: docker build --tag family-tasks:root-spa-ingress-test .
+
+      - name: Smoke-test Envoy root routing
+        run: scripts/test-root-spa-ingress.sh family-tasks:root-spa-ingress-test
+
   container:
     name: Build family-tasks image
     runs-on: ubuntu-24.04

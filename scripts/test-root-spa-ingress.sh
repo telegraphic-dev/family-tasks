@@ -74,6 +74,10 @@ test "$post_status" != 200
 ! grep --quiet '<title>Family Tasks</title>' "$post_body"
 rm -f "$post_body"
 
+mcp_status="$(curl --silent --show-error --max-time 2 --output /dev/null \
+  --write-out '%{http_code}' "$origin/mcp")"
+test "$mcp_status" != 502
+
 docker exec "$container_name" sh -lc \
   'test "$(ps -eo args | grep -c "envoy ")" -ge 2'
 

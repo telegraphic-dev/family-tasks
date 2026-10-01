@@ -25,14 +25,17 @@ static_resources:
                             prefix: "/mcp"
                           route:
                             cluster: reboot
+                            host_rewrite_literal: "127.0.0.1:9992"
                         - match:
                             prefix: "/__/"
                           route:
                             cluster: reboot
+                            host_rewrite_literal: "127.0.0.1:9992"
                         - match:
                             prefix: "/.well-known/"
                           route:
                             cluster: reboot
+                            host_rewrite_literal: "127.0.0.1:9992"
                         # Only browser document navigations fall back to the web SPA.
                         # Asset/API requests continue to Reboot and preserve normal errors.
                         - match:
@@ -50,6 +53,7 @@ static_resources:
                                     regex: ".*text/html.*"
                           route:
                             cluster: reboot
+                            host_rewrite_literal: "127.0.0.1:9992"
                             regex_rewrite:
                               pattern:
                                 google_re2: {}
@@ -59,6 +63,7 @@ static_resources:
                             prefix: "/"
                           route:
                             cluster: reboot
+                            host_rewrite_literal: "127.0.0.1:9992"
                 http_filters:
                   - name: envoy.filters.http.router
                     typed_config:

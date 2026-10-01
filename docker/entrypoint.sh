@@ -25,6 +25,29 @@ trap on_signal INT TERM
 env -u PORT -u RBT_PORT rbt serve run --port=9992 &
 reboot_pid=$!
 
+# Do not expose a transient Reboot root page or 502s while its generated
+# Envoy receives its first xDS configuration.
+ready=false
+attempt=0
+while [ "$attempt" -lt 60 ]; do
+  if curl --fail --silent --max-time 2 \
+    http://127.0.0.1:9992/__/frontend/web/ >/dev/null; then
+    ready=true
+    break
+  fi
+  if ! kill -0 "$reboot_pid" 2>/dev/null; then
+    wait "$reboot_pid"
+    exit $?
+  fi
+  attempt=$((attempt + 1))
+  sleep 1
+done
+if [ "$ready" != true ]; then
+  printf '%s\n' 'Reboot did not become ready on its internal Envoy port.' >&2
+  stop_children
+  exit 1
+fi
+
 envoy -c /app/docker/envoy-root-spa.yaml --disable-hot-restart &
 envoy_pid=$!
 

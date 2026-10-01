@@ -34,7 +34,8 @@ trap 'status=$?; rm -f "$root_body" "$root_headers" "$deep_body" "$deep_headers"
 
 for ((attempt = 0; attempt < 120; attempt++)); do
   if curl --fail --silent --max-time 2 \
-    --header 'Accept: text/html' "$origin/" --output "$root_body"; then
+    --header 'Accept: text/html' "$origin/" --output "$root_body" \
+    && grep --quiet '<title>Family Tasks</title>' "$root_body"; then
     break
   fi
   sleep 1

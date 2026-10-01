@@ -1,0 +1,74 @@
+static_resources:
+  listeners:
+    - name: public
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 9991
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: family_tasks_root_ingress
+                codec_type: AUTO
+                route_config:
+                  name: family_tasks_root_routes
+                  virtual_hosts:
+                    - name: family_tasks
+                      domains: ["*"]
+                      routes:
+                        # Reboot owns protocol, OAuth, MCP UI, and discovery namespaces.
+                        - match:
+                            prefix: "/mcp"
+                          route:
+                            cluster: reboot
+                        - match:
+                            prefix: "/__/"
+                          route:
+                            cluster: reboot
+                        - match:
+                            prefix: "/.well-known/"
+                          route:
+                            cluster: reboot
+                        # Only browser document navigations fall back to the web SPA.
+                        # Asset/API requests continue to Reboot and preserve normal errors.
+                        - match:
+                            prefix: "/"
+                            headers:
+                              - name: ":method"
+                                string_match:
+                                  exact: GET
+                              - name: accept
+                                string_match:
+                                  safe_regex:
+                                    google_re2: {}
+                                    regex: ".*text/html.*"
+                          route:
+                            cluster: reboot
+                            regex_rewrite:
+                              pattern:
+                                google_re2: {}
+                                regex: "^/.*$"
+                              substitution: "/__/frontend/web/"
+                        - match:
+                            prefix: "/"
+                          route:
+                            cluster: reboot
+                http_filters:
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  clusters:
+    - name: reboot
+      connect_timeout: 2s
+      type: STATIC
+      load_assignment:
+        cluster_name: reboot
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: 127.0.0.1
+                      port_value: 9992

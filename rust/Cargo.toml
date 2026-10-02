@@ -1,0 +1,3 @@
+[workspace]
+members = ["family-tasks"]
+resolver = "3"

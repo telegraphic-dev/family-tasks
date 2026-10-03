@@ -27,8 +27,10 @@ ENV PORT=9991 \
 
 COPY backend/src/ backend/src/
 COPY --from=frontend-build /app/frontend/dist/ frontend/dist/
+COPY docker/ docker/
+RUN chmod 755 docker/entrypoint.sh
 
 VOLUME ["/data"]
 EXPOSE 9991
 
-CMD ["rbt", "serve", "run"]
+CMD ["docker/entrypoint.sh"]

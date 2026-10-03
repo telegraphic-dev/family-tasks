@@ -69,13 +69,15 @@ docker run --detach \
   "$image" >/dev/null
 
 for ((attempt = 0; attempt < 45; attempt++)); do
-  if curl --fail --silent --show-error --max-time 2 "http://127.0.0.1:${host_port}/__/frontend/web/" >/dev/null; then
+  if curl --fail --silent --max-time 2 \
+    --header 'Accept: text/html' "http://127.0.0.1:${host_port}/" >/dev/null; then
     break
   fi
   sleep 1
 done
 
-curl --fail --silent --show-error --max-time 2 "http://127.0.0.1:${host_port}/__/frontend/web/" >/dev/null
+curl --fail --silent --show-error --max-time 2 \
+  --header 'Accept: text/html' "http://127.0.0.1:${host_port}/" >/dev/null
 
 # Portless creates/trusts its local CA on first use and binds loopback HTTPS.
 # Pin the proxy to the standard HTTPS port so the browser URL has no port suffix.
@@ -88,7 +90,7 @@ if [[ ! "$proxy_url" =~ ^https://[^/:]+$ ]]; then
   exit 1
 fi
 
-app_url="${proxy_url}/__/frontend/web/"
+app_url="$proxy_url"
 printf '\nFamily Tasks is running at:\n  %s\n' "$app_url"
 printf 'Container: %s  |  State volume: %s\n' "$container_name" "$state_volume"
 open_url "$app_url"

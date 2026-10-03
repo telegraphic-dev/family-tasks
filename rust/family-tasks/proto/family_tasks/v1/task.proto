@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package family_tasks.v1;
+
+import "rbt/v1alpha1/options.proto";
+
+message TaskState {
+  option (rbt.v1alpha1.state) = {
+    implements: ["family_tasks.v1.TaskWrites", "family_tasks.v1.TaskReads"]
+  };
+
+  string household_id = 1;
+  string creator_id = 2;
+  string title = 3;
+  string notes = 4;
+  string due_date = 5;
+  string assignee_id = 6;
+  string status = 7;
+}
+
+message CreateTaskRequest {
+  string household_id = 1;
+  string creator_id = 2;
+  string title = 3;
+  string notes = 4;
+  string due_date = 5;
+  string assignee_id = 6;
+}
+
+message CreateTaskResponse {}
+message CompleteTaskRequest {}
+message CompleteTaskResponse {}
+message GetTaskDetailsRequest {}
+
+message TaskDetailsResponse {
+  string household_id = 1;
+  string title = 2;
+  string notes = 3;
+  string due_date = 4;
+  string assignee_id = 5;
+  string status = 6;
+}
+
+service TaskWrites {
+  option (rbt.v1alpha1.service) = { state: "family_tasks.v1.TaskState" };
+
+  rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse) {
+    option (rbt.v1alpha1.method).writer = {};
+  }
+
+  rpc CompleteTask(CompleteTaskRequest) returns (CompleteTaskResponse) {
+    option (rbt.v1alpha1.method).writer = {};
+  }
+}
+
+service TaskReads {
+  option (rbt.v1alpha1.service) = { state: "family_tasks.v1.TaskState" };
+
+  rpc GetTaskDetails(GetTaskDetailsRequest) returns (TaskDetailsResponse) {
+    option (rbt.v1alpha1.method).reader = {};
+  }
+}

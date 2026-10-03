@@ -1,24 +1,45 @@
-# Draft Rust rewrite
+# Rust Family Tasks slice
 
-This is the Family Tasks backend rewritten for a **hypothetical first-class
-Rust Reboot SDK**. It is intentionally not buildable today: the `reboot` Rust
-runtime, its derives, and generated actor bindings do not exist.
+This is an executable, proto-first Rust consumer of the experimental Reboot Rust
+SDK. It implements one durable **Task** actor lifecycle over Reboot's Database
+gRPC sidecar:
 
-The application code is nevertheless intended to be the actual target DX:
+- `CreateTask` writer, with the existing `Untitled task` default;
+- `CompleteTask` writer;
+- `GetTaskDetails` reader;
+- generated concrete unary Tonic adapters, durable state recovery, and
+  idempotent writer replay.
 
-- `serde` structs plus stable `#[reboot(tag = N)]` tags replace Pydantic/Zod
-  definitions.
-- `#[reboot::service]` defines durable actor methods, their effect kind, MCP
-  exposure, factory status, and UI metadata.
-- `Reader`, `Writer`, and `Transaction` capability values make illegal writes
-  from reads and non-atomic cross-actor work unrepresentable in the public API.
-- Actor implementation code keeps the current application’s household
-  membership and authorization rules intact.
+The protobuf schema preserves the existing task-state and task-request field
+tags. `Cargo.lock` pins the exact Reboot SDK Git revision used for generation
+and runtime behavior.
 
-`src/lib.rs` carries the complete API, service declarations, and implementation
-sketch. `src/main.rs` shows intended application assembly.
+## Run
 
-Before this becomes executable, Reboot needs descriptor/code generation,
-state-protocol and retry support, ordered-map bindings, OAuth context
-propagation, and a cross-language conformance suite that runs the existing BDD
-scenarios against both Python and Rust implementations.
+The service requires a reachable Reboot Database sidecar endpoint (with a
+scheme) and listens on loopback by default:
+
+```sh
+REBOOT_RUST_DATABASE_ENDPOINT=http://127.0.0.1:50053 \
+  cargo run --manifest-path rust/Cargo.toml --locked -p family-tasks
+```
+
+Set `REBOOT_RUST_LISTEN_ADDR` to override `127.0.0.1:50051`.
+
+## Verify
+
+```sh
+cargo test --manifest-path rust/Cargo.toml --locked
+```
+
+The integration test starts the SDK's generated Tonic FakeDatabase, serves the
+Family Tasks adapters over loopback, verifies create replay under one UUID,
+and verifies a separate completion persists and is readable.
+
+## Deliberate boundary
+
+This is **not** the Python application's full replacement. It does not yet
+provide identity validation or household authorization, factory/internal calls,
+cross-actor transactions, ordered task indexes, MCP/UI projection, OAuth, or
+`rbt dev run --rust`. A bearer token is transport metadata only until a Rust
+auth/runtime layer validates it.

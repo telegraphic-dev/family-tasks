@@ -19,6 +19,10 @@ const DEFAULT_TASK_TITLE: &str = "Untitled task";
 const OPEN: &str = "open";
 const COMPLETED: &str = "completed";
 
+fn task_exists(state: &proto::TaskState) -> bool {
+    !state.household_id.is_empty()
+}
+
 #[derive(Clone, Copy, Default)]
 pub struct TaskHandler;
 
@@ -29,6 +33,16 @@ impl generated::TaskWritesDatabaseHandler for TaskHandler {
         state: &mut proto::TaskState,
         request: proto::CreateTaskRequest,
     ) -> Result<proto::CreateTaskResponse, tonic::Status> {
+        if state.household_id.is_empty() {
+            if request.household_id.trim().is_empty() || request.creator_id.trim().is_empty() {
+                return Err(tonic::Status::invalid_argument(
+                    "household_id and creator_id are required",
+                ));
+            }
+        } else {
+            return Err(tonic::Status::already_exists("task already exists"));
+        }
+
         state.household_id = request.household_id;
         state.creator_id = request.creator_id;
         state.title = if request.title.trim().is_empty() {
@@ -48,6 +62,9 @@ impl generated::TaskWritesDatabaseHandler for TaskHandler {
         state: &mut proto::TaskState,
         request: proto::UpdateTaskRequest,
     ) -> Result<proto::UpdateTaskResponse, tonic::Status> {
+        if !task_exists(state) {
+            return Err(tonic::Status::not_found("task does not exist"));
+        }
         if !request.title.is_empty() {
             state.title = request.title;
         }
@@ -66,6 +83,9 @@ impl generated::TaskWritesDatabaseHandler for TaskHandler {
         state: &mut proto::TaskState,
         _: proto::CompleteTaskRequest,
     ) -> Result<proto::CompleteTaskResponse, tonic::Status> {
+        if !task_exists(state) {
+            return Err(tonic::Status::not_found("task does not exist"));
+        }
         state.status = COMPLETED.to_owned();
         Ok(proto::CompleteTaskResponse {})
     }
@@ -75,6 +95,9 @@ impl generated::TaskWritesDatabaseHandler for TaskHandler {
         state: &mut proto::TaskState,
         _: proto::ReopenTaskRequest,
     ) -> Result<proto::ReopenTaskResponse, tonic::Status> {
+        if !task_exists(state) {
+            return Err(tonic::Status::not_found("task does not exist"));
+        }
         state.status = OPEN.to_owned();
         Ok(proto::ReopenTaskResponse {})
     }

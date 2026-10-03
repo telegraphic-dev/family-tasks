@@ -53,6 +53,47 @@ async fn task_lifecycle_is_durable_and_create_replays() {
         .unwrap();
     assert_eq!(database.store_requests().len(), 1, "retry must replay");
 
+    let duplicate = writes
+        .create_task(
+            context
+                .writer_with_key(
+                    proto::CreateTaskRequest {
+                        household_id: "other-household".to_owned(),
+                        creator_id: "other-parent".to_owned(),
+                        title: "Replacement".to_owned(),
+                        notes: String::new(),
+                        due_date: String::new(),
+                        assignee_id: String::new(),
+                    },
+                    Uuid::from_u128(5),
+                )
+                .unwrap(),
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(duplicate.code(), tonic::Code::AlreadyExists);
+    assert_eq!(
+        database.store_requests().len(),
+        1,
+        "duplicate must not overwrite"
+    );
+
+    let missing_context = ExternalContext::new("missing-task");
+    let missing = writes
+        .complete_task(
+            missing_context
+                .writer_with_key(proto::CompleteTaskRequest {}, Uuid::from_u128(6))
+                .unwrap(),
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(missing.code(), tonic::Code::NotFound);
+    assert_eq!(
+        database.store_requests().len(),
+        1,
+        "missing task must not persist"
+    );
+
     let details = reads
         .get_task_details(context.reader(proto::GetTaskDetailsRequest {}).unwrap())
         .await

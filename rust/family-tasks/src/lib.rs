@@ -110,6 +110,9 @@ impl generated::TaskReadsDatabaseHandler for TaskHandler {
         state: &proto::TaskState,
         _: proto::GetTaskDetailsRequest,
     ) -> Result<proto::TaskDetailsResponse, tonic::Status> {
+        if !task_exists(state) {
+            return Err(tonic::Status::not_found("task does not exist"));
+        }
         Ok(proto::TaskDetailsResponse {
             household_id: state.household_id.clone(),
             title: state.title.clone(),

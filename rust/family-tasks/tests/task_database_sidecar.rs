@@ -94,6 +94,16 @@ async fn task_lifecycle_is_durable_and_create_replays() {
         "missing task must not persist"
     );
 
+    let missing_read = reads
+        .get_task_details(
+            missing_context
+                .reader(proto::GetTaskDetailsRequest {})
+                .unwrap(),
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(missing_read.code(), tonic::Code::NotFound);
+
     let details = reads
         .get_task_details(context.reader(proto::GetTaskDetailsRequest {}).unwrap())
         .await

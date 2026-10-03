@@ -4,8 +4,8 @@ This is an executable, proto-first Rust consumer of the experimental Reboot Rust
 SDK. It implements one durable **Task** actor lifecycle over Reboot's Database
 gRPC sidecar:
 
-- `CreateTask` writer, with the existing `Untitled task` default;
-- `CompleteTask` writer;
+- `CreateTask`, `UpdateTask`, `CompleteTask`, and `ReopenTask` writers, with the
+  existing `Untitled task` default;
 - `GetTaskDetails` reader;
 - generated concrete unary Tonic adapters, durable state recovery, and
   idempotent writer replay.

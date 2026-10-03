@@ -43,6 +43,24 @@ impl generated::TaskWritesDatabaseHandler for TaskHandler {
         Ok(proto::CreateTaskResponse {})
     }
 
+    async fn update_task(
+        &self,
+        state: &mut proto::TaskState,
+        request: proto::UpdateTaskRequest,
+    ) -> Result<proto::UpdateTaskResponse, tonic::Status> {
+        if !request.title.is_empty() {
+            state.title = request.title;
+        }
+        if !request.notes.is_empty() {
+            state.notes = request.notes;
+        }
+        if !request.due_date.is_empty() {
+            state.due_date = request.due_date;
+        }
+        state.assignee_id = request.assignee_id;
+        Ok(proto::UpdateTaskResponse {})
+    }
+
     async fn complete_task(
         &self,
         state: &mut proto::TaskState,
@@ -50,6 +68,15 @@ impl generated::TaskWritesDatabaseHandler for TaskHandler {
     ) -> Result<proto::CompleteTaskResponse, tonic::Status> {
         state.status = COMPLETED.to_owned();
         Ok(proto::CompleteTaskResponse {})
+    }
+
+    async fn reopen_task(
+        &self,
+        state: &mut proto::TaskState,
+        _: proto::ReopenTaskRequest,
+    ) -> Result<proto::ReopenTaskResponse, tonic::Status> {
+        state.status = OPEN.to_owned();
+        Ok(proto::ReopenTaskResponse {})
     }
 }
 

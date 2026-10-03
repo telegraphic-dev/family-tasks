@@ -24,7 +24,6 @@ async fn task_lifecycle_is_durable_and_create_replays() {
     let (address, server) = start_task_service(&database_endpoint).await;
     let context = ExternalContext::new("task-1");
     let create_key = Uuid::from_u128(1);
-    let complete_key = Uuid::from_u128(2);
     let request = proto::CreateTaskRequest {
         household_id: "household-1".to_owned(),
         creator_id: "parent-1".to_owned(),
@@ -64,9 +63,36 @@ async fn task_lifecycle_is_durable_and_create_replays() {
     assert_eq!(details.status, "open");
 
     writes
+        .update_task(
+            context
+                .writer_with_key(
+                    proto::UpdateTaskRequest {
+                        title: "Take recycling out".to_owned(),
+                        notes: "Before breakfast".to_owned(),
+                        due_date: String::new(),
+                        assignee_id: String::new(),
+                    },
+                    Uuid::from_u128(2),
+                )
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let details = reads
+        .get_task_details(context.reader(proto::GetTaskDetailsRequest {}).unwrap())
+        .await
+        .unwrap()
+        .into_inner();
+    assert_eq!(details.title, "Take recycling out");
+    assert_eq!(details.notes, "Before breakfast");
+    assert_eq!(details.due_date, "2026-10-03");
+    assert_eq!(details.assignee_id, "");
+    assert_eq!(details.status, "open");
+
+    writes
         .complete_task(
             context
-                .writer_with_key(proto::CompleteTaskRequest {}, complete_key)
+                .writer_with_key(proto::CompleteTaskRequest {}, Uuid::from_u128(3))
                 .unwrap(),
         )
         .await
@@ -78,8 +104,23 @@ async fn task_lifecycle_is_durable_and_create_replays() {
         .into_inner();
     assert_eq!(details.status, "completed");
 
+    writes
+        .reopen_task(
+            context
+                .writer_with_key(proto::ReopenTaskRequest {}, Uuid::from_u128(4))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let details = reads
+        .get_task_details(context.reader(proto::GetTaskDetailsRequest {}).unwrap())
+        .await
+        .unwrap()
+        .into_inner();
+    assert_eq!(details.status, "open");
+
     let stores = database.store_requests();
-    assert_eq!(stores.len(), 2);
+    assert_eq!(stores.len(), 4);
     assert_eq!(
         stores[0].actor_upserts[0].state_type,
         "family_tasks.v1.TaskState"

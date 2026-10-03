@@ -28,8 +28,19 @@ message CreateTaskRequest {
 }
 
 message CreateTaskResponse {}
+
+message UpdateTaskRequest {
+  string title = 1;
+  string notes = 2;
+  string due_date = 3;
+  string assignee_id = 4;
+}
+message UpdateTaskResponse {}
+
 message CompleteTaskRequest {}
 message CompleteTaskResponse {}
+message ReopenTaskRequest {}
+message ReopenTaskResponse {}
 message GetTaskDetailsRequest {}
 
 message TaskDetailsResponse {
@@ -48,7 +59,15 @@ service TaskWrites {
     option (rbt.v1alpha1.method).writer = {};
   }
 
+  rpc UpdateTask(UpdateTaskRequest) returns (UpdateTaskResponse) {
+    option (rbt.v1alpha1.method).writer = {};
+  }
+
   rpc CompleteTask(CompleteTaskRequest) returns (CompleteTaskResponse) {
+    option (rbt.v1alpha1.method).writer = {};
+  }
+
+  rpc ReopenTask(ReopenTaskRequest) returns (ReopenTaskResponse) {
     option (rbt.v1alpha1.method).writer = {};
   }
 }

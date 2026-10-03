@@ -1,8 +1,10 @@
 # Rust Family Tasks boundaries
 
-The executable Rust slice intentionally covers one durable Task actor only:
-`CreateTask`, `CompleteTask`, and `GetTaskDetails`, backed by generated unary
-Tonic adapters and Reboot's Database gRPC sidecar.
+The executable Rust slice intentionally covers one durable Task actor lifecycle:
+`CreateTask`, `UpdateTask`, `CompleteTask`, `ReopenTask`, and
+`GetTaskDetails`, backed by generated unary Tonic adapters and Reboot's
+Database gRPC sidecar. It preserves idempotent create replay and rejects
+invalid lifecycle writes (duplicate creation and mutations of missing tasks).
 
 It is not a replacement for the existing Python Reboot application. The
 following must exist before the complete Family Tasks service can move to Rust:

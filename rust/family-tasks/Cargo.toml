@@ -1,0 +1,20 @@
+[package]
+name = "family-tasks"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "Apache-2.0"
+description = "Proto-first Rust Family Tasks slice backed by the Reboot Database sidecar"
+
+[build-dependencies]
+reboot = { package = "reboot-rust-schema", git = "https://github.com/jean-de-bot/reboot.git", rev = "6cc19373ceb4cd13c439c0072f50037e2b9c88e1", features = ["build"] }
+
+[dependencies]
+prost = "0.13"
+reboot = { package = "reboot-rust-schema", git = "https://github.com/jean-de-bot/reboot.git", rev = "6cc19373ceb4cd13c439c0072f50037e2b9c88e1", features = ["test-support"] }
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread"] }
+tokio-stream = { version = "0.1", features = ["net"] }
+tonic = "0.12"
+
+[dev-dependencies]
+uuid = "1"
